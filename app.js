@@ -12,7 +12,6 @@ var connect = require('connect'),
 var argv = process.argv.slice();
 if(argv.indexOf('--debug') >= 0){
     logger.setLevel('DEBUG');
-    GLOBAL.DEBUG = true;
     logger.info('running in debug');
 
 }else {
@@ -20,16 +19,27 @@ if(argv.indexOf('--debug') >= 0){
 }
 
 
+if(argv.indexOf('--project') >= 0){
+    GLOBAL.pjconfig =  require('./project.debug.json');
+}else {
+    GLOBAL.pjconfig = require('./project.json');
+}
+
+
+
 var readyClient = [];
 var clientMapping = {};
-var appKeyList = {};
+var appKeyList = {
+    appkey : {},
+    idMappingKey : {}
+};
 
 //var MAX_TIMEOUT = 60*60*1000 * 15;
 var MAX_TIMEOUT = 1000 * 15;
 
-
-acceptor = zmq.socket('pull');
-
+mq = zmq.socket('sub');
+mq.connect(GLOBAL.pjconfig.zmq.url);
+mq.subscribe("badjs");
 
 setInterval(function () {
 
@@ -42,6 +52,7 @@ setInterval(function () {
     })
 
     shouldRemove.forEach(function (value) {
+        logger.info("timeout for close : " + value.ext.id)
         value.destroy();
     });
 
@@ -49,12 +60,14 @@ setInterval(function () {
 
 
 var processProjectId = function (str){
-    var map = {};
-    (str.split(/[\|_]/) || []).forEach(function (value){
+    var map = {appkey:{} , idMappingKey : {}};
+    (str.split(/[_]/) || []).forEach(function (value){
         if(value){
-            map[value +""] = true;
+            var arry = value.split("|");
+            map.appkey[arry[1]] = true;
+            map.idMappingKey[arry[0] ] = arry[1];
         }
-    })
+    });
     return map;
 }
 
@@ -96,9 +109,15 @@ var processClientMessage = function (msg, client) {
 
     switch (msg.type) {
         case "auth" :
-            if (appKeyList.indexOf(msg.appkey) > -1) {
+            if (appKeyList.appkey[msg.appkey]) {
                 client.ext.appkey = msg.appkey;
+                if(!clientMapping[msg.appkey]){
+                    clientMapping[msg.appkey] = {};
+                }
                 clientMapping[msg.appkey][client.ext.id] = client;
+                client.write(JSON.stringify({"err" : 0 , msg: "auth success"}));
+            }else {
+                client.write(JSON.stringify({"err" : -1 , msg: "auth fail"}));
             }
             break;
         case "keepalive" :
@@ -131,7 +150,7 @@ var removeClient = function (client) {
 }
 
 
-acceptor.on("message", function (data) {
+mq.on("message", function (data) {
 
     try{
         var dataStr = data.toString();
@@ -141,20 +160,13 @@ acceptor.on("message", function (data) {
         return ;
     }
 
-    var regExp = new RegExp(data.id+"\|([^_]+)")
-    var match = appKeyList.match(regExp)
-    if(!match){
-        return ;
-    }
+    var appkey = appKeyList.idMappingKey[data.id +""];
 
-    appKeyList.match("dat")
-
-    var appKey = "";
-    var message = "";
-    var sendingClients = clientMapping[appKey];
+    var message = data;
+    var sendingClients = clientMapping[appkey];
     if (sendingClients) {
         _.each(sendingClients, function (value) {
-            value.send({type: "message", msg: message});
+            value.write(JSON.stringify({type: "message", msg: message}));
         })
     }
 })
@@ -186,6 +198,6 @@ var server  = net.createServer(function (c) { //'connection' listener
 
 startService();
 
-server.listen(9500, function () { //'listening' listener
-    logger.info("server start ... ")
+server.listen( GLOBAL.pjconfig.port, function () { //'listening' listener
+    logger.info("server start ...  , port:" +  GLOBAL.pjconfig.port )
 });

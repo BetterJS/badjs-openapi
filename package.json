@@ -7,7 +7,7 @@
     "connect": "^2.25.7",
     "log4js": "^0.6.27",
     "underscore": "^1.8.3",
-    "zmq": "^2.13.0"
+    "zmq": "^2.11.0"
   },
   "devDependencies": {},
   "scripts": {
