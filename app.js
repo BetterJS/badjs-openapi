@@ -35,7 +35,7 @@ var appKeyList = {
 };
 
 //var MAX_TIMEOUT = 60*60*1000 * 15;
-var MAX_TIMEOUT = 1000 * 60;
+var MAX_TIMEOUT = 1000 * 60 * 15;
 
 mq = zmq.socket('sub');
 mq.connect(GLOBAL.pjconfig.zmq.url);
@@ -127,6 +127,7 @@ var processClientMessage = function (msg, client) {
             break;
         case "keepalive" :
             client.ext.timeout = new Date - 0;
+            client.write(JSON.stringify({"err" : 0 , msg: "keepalive" , type: "keepalive"}));
             break;
         default :
             client.write(JSON.stringify({"err" : -2 , msg: "should auth " , type: "auth"}));
