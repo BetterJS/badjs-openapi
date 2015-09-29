@@ -118,8 +118,11 @@ var processClientMessage = function (msg, client) {
                 }
                 clientMapping[msg.appkey][client.ext.id] = client;
                 client.write(JSON.stringify({"err" : 0 , msg: "auth success"}));
+                logger.info("one client auth succ , appkey is " + msg.appkey);
             }else {
                 client.write(JSON.stringify({"err" : -1 , msg: "auth fail"}));
+                logger.info("one client auth fail , appkey is " + msg.appkey);
+                client.destroy();
             }
             break;
         case "keepalive" :
