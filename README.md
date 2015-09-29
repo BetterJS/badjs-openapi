@@ -1,4 +1,4 @@
-#badjs-open
+#badjs-openapi
 
 > A open api for other system easy to access
 

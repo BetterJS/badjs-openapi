@@ -117,16 +117,20 @@ var processClientMessage = function (msg, client) {
                     clientMapping[msg.appkey] = {};
                 }
                 clientMapping[msg.appkey][client.ext.id] = client;
-                client.write(JSON.stringify({"err" : 0 , msg: "auth success"}));
+                client.write(JSON.stringify({"err" : 0 , msg: "auth success" , type: "auth"}));
                 logger.info("one client auth succ , appkey is " + msg.appkey);
             }else {
-                client.write(JSON.stringify({"err" : -1 , msg: "auth fail"}));
+                client.write(JSON.stringify({"err" : -1 , msg: "auth fail" , type: "auth"}));
                 logger.info("one client auth fail , appkey is " + msg.appkey);
                 client.destroy();
             }
             break;
         case "keepalive" :
             client.ext.timeout = new Date - 0;
+            break;
+        default :
+            client.write(JSON.stringify({"err" : -2 , msg: "should auth " , type: "auth"}));
+            client.destroy();
             break;
     }
 }
@@ -175,7 +179,7 @@ mq.on("message", function (data) {
     var sendingClients = clientMapping[appkey];
     if (sendingClients) {
         _.each(sendingClients, function (value) {
-            value.write(JSON.stringify({type: "message", msg: message}));
+            value.write(JSON.stringify({type: "message", msg: message , err : 0}));
         })
     }
 })

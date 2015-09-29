@@ -1,5 +1,5 @@
 {
-  "name": "badjs_open",
+  "name": "badjs-openapi",
   "version": "1.0.0",
   "description": "A open api for other system easy to access ",
   "main": "app.js",
