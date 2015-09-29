@@ -56,7 +56,7 @@ setInterval(function () {
         value.destroy();
     });
 
-    logger.info('current length of  client is ' + readyClient.length);
+    logger.info('timeout detection , current length of  client is ' + readyClient.length);
 
 }, MAX_TIMEOUT);
 
