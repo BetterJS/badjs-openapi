@@ -35,7 +35,7 @@ var appKeyList = {
 };
 
 //var MAX_TIMEOUT = 60*60*1000 * 15;
-var MAX_TIMEOUT = 1000 * 15;
+var MAX_TIMEOUT = 1000 * 60;
 
 mq = zmq.socket('sub');
 mq.connect(GLOBAL.pjconfig.zmq.url);
@@ -55,6 +55,8 @@ setInterval(function () {
         logger.info("timeout for close : " + value.ext.id)
         value.destroy();
     });
+
+    logger.info('current length of  client is ' + readyClient.length);
 
 }, MAX_TIMEOUT);
 
@@ -151,6 +153,10 @@ var removeClient = function (client) {
 
 
 mq.on("message", function (data) {
+
+    if(!readyClient.length){
+        return ;
+    }
 
     try{
         var dataStr = data.toString();

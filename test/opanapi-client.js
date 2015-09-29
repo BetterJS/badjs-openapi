@@ -10,12 +10,9 @@ client.on("data"  , function (data){
     console.log(data.toString())
 });
 
-/*
-setTimeout(function (){
-    client.destroy();
-    console.log("out")
+setInterval(function (){
+    client.write(JSON.stringify({type:"keepalive" , appkey : "1f3d368d87a767d9134d99cee392b062"}))
 },5000)
 
-*/
 
 
