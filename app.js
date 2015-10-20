@@ -8,6 +8,8 @@ var connect = require('connect'),
     log4js = require('log4js'),
     logger = log4js.getLogger();
 
+var path = require("path");
+
 
 var argv = process.argv.slice();
 if(argv.indexOf('--debug') >= 0){
@@ -18,11 +20,13 @@ if(argv.indexOf('--debug') >= 0){
     logger.setLevel('INFO');
 }
 
+var dbPath = path.join(__dirname , "project.db");
+
 
 if(argv.indexOf('--project') >= 0){
-    GLOBAL.pjconfig =  require('./project.debug.json');
+    GLOBAL.pjconfig =  require(path.join(__dirname , 'project.debug.json'));
 }else {
-    GLOBAL.pjconfig = require('./project.json');
+    GLOBAL.pjconfig = require(path.join(__dirname , 'project.json') );
 }
 
 
@@ -63,11 +67,14 @@ setInterval(function () {
 
 var processProjectId = function (str){
     var map = {appkey:{} , idMappingKey : {}};
-    (str.split(/[_]/) || []).forEach(function (value){
+
+    var json = JSON.parse(str || '{}');
+
+    _.each(json , function (value , id){
         if(value){
-            var arry = value.split("|");
-            map.appkey[arry[1]] = true;
-            map.idMappingKey[arry[0] ] = arry[1];
+            var appkey = value.appkey;
+            map.appkey[appkey] = true;
+            map.idMappingKey[id ] = appkey;
         }
     });
     return map;
@@ -75,7 +82,7 @@ var processProjectId = function (str){
 
 var startService = function () {
 
-    appKeyList = processProjectId(fs.readFileSync("./project.db", "utf-8"));
+    appKeyList = processProjectId(fs.readFileSync(dbPath, "utf-8"));
 
 
     connect()
@@ -89,14 +96,14 @@ var startService = function () {
             }
 
 
-            if (param.auth != "badjsOpen" || !param.projectsId) {
+            if (param.auth != "badjsOpen" || !param.projectsInfo) {
 
             } else {
 
-                appKeyList = processProjectId(param.projectsId );
+                appKeyList = processProjectId(param.projectsInfo );
 
-                fs.writeFile("./project.db", param.projectsId , function () {
-                    logger.info('update project.db :' + param.projectsId);
+                fs.writeFile(dbPath, param.projectsInfo , function () {
+                    logger.info('update project.db :' + param.projectsInfo);
                 });
             }
             res.writeHead(200);
