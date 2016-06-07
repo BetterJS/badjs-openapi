@@ -1,3 +1,7 @@
+
+##had merge into badjs-mq 
+
+====
 #badjs-openapi
 
 > A open api for other system easy to access
